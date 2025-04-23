@@ -123,6 +123,7 @@ export default function RallyLayout() {
       <div className="flex flex-1 overflow-hidden flex-col lg:flex-row">
         <div className="w-full lg:w-1/2 h-[400px] lg:h-full sticky top-0 z-10 bg-gray-200">
           <MapContainer
+            key={`${startGPS.lat}-${startGPS.lon}`}  // 👈 This triggers a full re-render
             center={[startGPS.lat, startGPS.lon]}
             zoom={14}
             scrollWheelZoom={true}
