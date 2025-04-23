@@ -116,7 +116,7 @@ export default function RallyLayout() {
 
       <div className="flex flex-1 overflow-hidden flex-col lg:flex-row">
         <div className="w-full lg:w-1/2 h-64 lg:h-full sticky top-0 z-10">
-          {startGPS && (
+          
             <MapContainer
                 center={
                     startGPS
