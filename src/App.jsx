@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -59,7 +59,7 @@ export default function RallyLayout() {
   const [waypoints, setWaypoints] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Safety');
   const [startTime, setStartTime] = useState(null);
-  const [startGPS, setStartGPS] = useState(null);
+  const [startGPS, setStartGPS] = useState({ lat: -33.8688, lon: 151.2093 });
 
   const handleAddWaypoint = () => {
     if (!selectedIcon || !startGPS) return;
@@ -110,7 +110,6 @@ export default function RallyLayout() {
               (err) => {
                 console.error("❌ GPS Error:", err);
                 alert("Could not access GPS — using fallback.");
-                setStartGPS({ lat: -35.033159, lon: 138.746773 });
               },
               { enableHighAccuracy: true, timeout: 10000 }
             );
@@ -124,7 +123,7 @@ export default function RallyLayout() {
       <div className="flex flex-1 overflow-hidden flex-col lg:flex-row">
         <div className="w-full lg:w-1/2 h-64 lg:h-full sticky top-0 z-10">
           <MapContainer
-            center={[startGPS?.lat ?? -33.8688, startGPS?.lon ?? 151.2093]}
+            center={[startGPS.lat, startGPS.lon]}
             zoom={14}
             scrollWheelZoom={true}
             className="h-full w-full"
@@ -229,3 +228,4 @@ export default function RallyLayout() {
     </div>
   );
 }
+
