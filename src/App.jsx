@@ -1,4 +1,4 @@
-// App.jsx - Rally Route Mapper
+// App.jsx - Rally Route Mapper with Toggleable Map
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -85,6 +85,7 @@ export default function RallyLayout() {
   const [waypoints, setWaypoints] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Safety');
   const [startGPS, setStartGPS] = useState({ lat: -33.8688, lon: 151.2093 });
+  const [showMap, setShowMap] = useState(true);
 
   const handleAddWaypoint = () => {
     if (!selectedIcon) return;
@@ -99,31 +100,39 @@ export default function RallyLayout() {
 
   return (
     <div className="flex flex-col h-screen">
-      <header className="px-4 py-2 border-b border-gray-300 bg-white font-heading text-xl font-bold">
+      <header className="px-4 py-2 border-b border-gray-300 bg-white font-heading text-xl font-bold flex justify-between items-center">
         Rally Route Mapper
+        <button
+          onClick={() => setShowMap(prev => !prev)}
+          className="text-sm px-3 py-1 bg-blue-600 text-white rounded"
+        >
+          {showMap ? 'Hide Map' : 'Show Map'}
+        </button>
       </header>
 
-      <div className="flex flex-1 overflow-hidden flex-col-reverse lg:flex-row">
-        <div className="w-full lg:w-1/2 h-[50vh] lg:h-full min-h-[300px]">
-          <MapContainer center={[startGPS.lat, startGPS.lon]} zoom={14} scrollWheelZoom className="h-full w-full">
-            <MapUpdater gps={startGPS} />
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
-            {waypoints.map((wp, idx) => (
-              <Marker
-                key={idx}
-                position={[wp.lat, wp.lon]}
-                icon={L.icon({ iconUrl: wp.iconSrc, iconSize: [32, 32] })}
-              >
-                <Popup>
-                  <strong>{wp.name}</strong><br />
-                  <span>Time: {wp.timestamp}</span><br />
-                  <span>GPS: {wp.lat}, {wp.lon}</span><br />
-                  {wp.poi && <span>POI: {wp.poi}</span>}
-                </Popup>
-              </Marker>
-            ))}
-          </MapContainer>
-        </div>
+      <div className={`flex flex-1 overflow-hidden ${showMap ? 'flex-col-reverse lg:flex-row' : 'flex-col'}`}>
+        {showMap && (
+          <div className="w-full lg:w-1/2 h-[50vh] lg:h-full min-h-[300px]">
+            <MapContainer center={[startGPS.lat, startGPS.lon]} zoom={14} scrollWheelZoom className="h-full w-full">
+              <MapUpdater gps={startGPS} />
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
+              {waypoints.map((wp, idx) => (
+                <Marker
+                  key={idx}
+                  position={[wp.lat, wp.lon]}
+                  icon={L.icon({ iconUrl: wp.iconSrc, iconSize: [32, 32] })}
+                >
+                  <Popup>
+                    <strong>{wp.name}</strong><br />
+                    <span>Time: {wp.timestamp}</span><br />
+                    <span>GPS: {wp.lat}, {wp.lon}</span><br />
+                    {wp.poi && <span>POI: {wp.poi}</span>}
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          </div>
+        )}
 
         <div className="w-full lg:w-1/2 h-full overflow-y-auto p-4 space-y-4 border-t lg:border-t-0 lg:border-l border-gray-300">
           <section>
