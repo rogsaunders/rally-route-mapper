@@ -118,11 +118,15 @@ export default function RallyLayout() {
         <div className="w-full lg:w-1/2 h-64 lg:h-full sticky top-0 z-10">
           {startGPS && (
             <MapContainer
-              center={[startGPS.lat, startGPS.lon]}
-              zoom={14}
-              scrollWheelZoom={true}
-              className="h-full w-full"
-            >
+                center={
+                    startGPS
+                        ? [startGPS.lat, startGPS.lon]
+                        : [-33.8688, 151.2093] // fallback: Sydney
+          }
+          zoom={14}
+          scrollWheelZoom={true}
+          className="h-full w-full"
+        >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution="&copy; OpenStreetMap contributors"
