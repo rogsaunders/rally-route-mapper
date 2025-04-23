@@ -103,7 +103,7 @@ export default function RallyLayout() {
         Rally Route Mapper
       </header>
 
-      <div className="flex flex-1 overflow-hidden flex-col lg:flex-row">
+      <div className="flex flex-1 overflow-hidden flex-col-reverse lg:flex-row">
         <div className="w-full lg:w-1/2 h-[50vh] lg:h-full min-h-[300px]">
           <MapContainer center={[startGPS.lat, startGPS.lon]} zoom={14} scrollWheelZoom className="h-full w-full">
             <MapUpdater gps={startGPS} />
