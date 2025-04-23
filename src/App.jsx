@@ -10,7 +10,6 @@ const iconCategories = {
     { name: 'Danger 2', src: '/icons/danger-2.svg' },
     { name: 'Danger 3', src: '/icons/danger-3.svg' },
     { name: 'Stop', src: '/icons/stop.svg' },
-    { name: 'Important', src: '/icons/important.svg' },
   ],
   'On Track': [
     { name: 'Bump', src: '/icons/bump.svg' },
@@ -107,6 +106,24 @@ export default function RallyLayout() {
           className="text-sm px-3 py-1 bg-blue-600 text-white rounded"
         >
           {showMap ? 'Hide Map' : 'Show Map'}
+        </button>
+        <button
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+          onClick={() => {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                const { latitude, longitude } = pos.coords;
+                setStartGPS({ lat: latitude, lon: longitude });
+                console.log("📍 GPS updated to:", latitude, longitude);
+              },
+              (err) => {
+                console.error("❌ Could not access GPS:", err.message);
+              },
+              { enableHighAccuracy: true }
+            );
+          }}
+        >
+          📍 Set Start Point
         </button>
       </header>
 
