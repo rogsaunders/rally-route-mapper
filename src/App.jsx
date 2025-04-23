@@ -100,6 +100,12 @@ export default function RallyLayout() {
           <img src="/logo-ooo.png" alt="Oz Outback Odyssey" className="h-10 w-auto" />
           <h1 className="text-3xl font-heading">Rally Route Mapper</h1>
         </div>
+        
+        <button onClick={() => setDarkMode(!darkMode)} className="text-lg">
+          {darkMode ? '🌞' : '🌙'}
+        </button>
+      </header>
+      <div className="p-4">
         <button
           onClick={() => {
             navigator.geolocation.getCurrentPosition(
@@ -116,12 +122,9 @@ export default function RallyLayout() {
          }}
          className="px-4 py-2 bg-blue-600 text-white rounded"
         >
-        📍 Set Start Point
+          📍 Set Start Point
         </button>
-        <button onClick={() => setDarkMode(!darkMode)} className="text-lg">
-          {darkMode ? '🌞' : '🌙'}
-        </button>
-      </header>
+      </div>
 
       <div className="flex flex-1 overflow-hidden gap-4">
         {/* LEFT: Map column */}
