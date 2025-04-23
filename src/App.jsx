@@ -100,6 +100,24 @@ export default function RallyLayout() {
           <img src="/logo-ooo.png" alt="Oz Outback Odyssey" className="h-10 w-auto" />
           <h1 className="text-3xl font-heading">Rally Route Mapper</h1>
         </div>
+        <button
+          onClick={() => {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                console.log("GPS triggered by user:", pos.coords);
+                setStartGPS({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+              },
+              (err) => {
+                console.error("Manual GPS error:", err);
+                alert("Unable to get location. Check permission settings.");
+              },
+              { enableHighAccuracy: true }
+            );
+         }}
+         className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
+        📍 Set Start Point
+        </button>
         <button onClick={() => setDarkMode(!darkMode)} className="text-lg">
           {darkMode ? '🌞' : '🌙'}
         </button>
