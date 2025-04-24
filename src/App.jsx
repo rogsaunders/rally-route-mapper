@@ -1,4 +1,4 @@
-// App.jsx - Rally Route Mapper with Toggleable Map
+// App.jsx - Rally Route Mapper with Section Controls
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -10,6 +10,7 @@ const iconCategories = {
     { name: 'Danger 2', src: '/icons/danger-2.svg' },
     { name: 'Danger 3', src: '/icons/danger-3.svg' },
     { name: 'Stop', src: '/icons/stop.svg' },
+    { name: 'Important', src: '/icons/important.svg' },
   ],
   'On Track': [
     { name: 'Bump', src: '/icons/bump.svg' },
@@ -39,17 +40,17 @@ const iconCategories = {
 
 const allIcons = Object.values(iconCategories).flat();
 
-function exportAsJSON(data) {
+function exportAsJSON(data, sectionName = 'rally-waypoints') {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'rally-waypoints.json';
+  a.download = `${sectionName}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
-function exportAsGPX(data) {
+function exportAsGPX(data, sectionName = 'rally-waypoints') {
   const gpxHeader = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Rally Route Mapper" xmlns="http://www.topografix.com/GPX/1/1">\n`;
   const gpxFooter = `</gpx>`;
   const gpxBody = data.map(wp => `
@@ -63,7 +64,7 @@ function exportAsGPX(data) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'rally-waypoints.gpx';
+  a.download = `${sectionName}.gpx`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -82,6 +83,8 @@ export default function RallyLayout() {
   const [selectedIcon, setSelectedIcon] = useState(null);
   const [poi, setPoi] = useState('');
   const [waypoints, setWaypoints] = useState([]);
+  const [sections, setSections] = useState([]);
+  const [sectionName, setSectionName] = useState('Section 1');
   const [activeCategory, setActiveCategory] = useState('Safety');
   const [startGPS, setStartGPS] = useState({ lat: -33.8688, lon: 151.2093 });
   const [showMap, setShowMap] = useState(true);
@@ -97,6 +100,12 @@ export default function RallyLayout() {
     setPoi('');
   };
 
+  const handleNewSection = () => {
+    setSections([...sections, { name: sectionName, data: waypoints }]);
+    setWaypoints([]);
+    setSectionName(`Section ${sections.length + 2}`);
+  };
+
   return (
     <div className="flex flex-col h-screen">
       <header className="px-4 py-2 border-b border-gray-300 bg-white font-heading text-xl font-bold flex justify-between items-center">
@@ -106,24 +115,6 @@ export default function RallyLayout() {
           className="text-sm px-3 py-1 bg-blue-600 text-white rounded"
         >
           {showMap ? 'Hide Map' : 'Show Map'}
-        </button>
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-          onClick={() => {
-            navigator.geolocation.getCurrentPosition(
-              (pos) => {
-                const { latitude, longitude } = pos.coords;
-                setStartGPS({ lat: latitude, lon: longitude });
-                console.log("📍 GPS updated to:", latitude, longitude);
-              },
-              (err) => {
-                console.error("❌ Could not access GPS:", err.message);
-              },
-              { enableHighAccuracy: true }
-            );
-          }}
-        >
-          📍 Set Start Point
         </button>
       </header>
 
@@ -154,8 +145,54 @@ export default function RallyLayout() {
         <div className="w-full lg:w-1/2 h-full overflow-y-auto p-4 space-y-4 border-t lg:border-t-0 lg:border-l border-gray-300">
           <section>
             <h2 className="text-lg font-semibold">📝 Route Info</h2>
+            <button
+              className="bg-blue-600 text-white px-4 py-2 rounded mb-2"
+              onClick={() => {
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    setStartGPS({ lat: latitude, lon: longitude });
+                    console.log("📍 GPS updated to:", latitude, longitude);
+                  },
+                  (err) => {
+                    console.error("❌ Could not access GPS:", err.message);
+                  },
+                  { enableHighAccuracy: true }
+                );
+              }}
+            >
+              📍 Set Start Point
+            </button>
             <input className="w-full p-2 rounded bg-gray-100" placeholder="Route Name" />
             <input className="w-full p-2 rounded bg-gray-100 mt-2" placeholder="Description" />
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold">📁 Section Controls</h2>
+            <input
+              className="w-full p-2 rounded bg-gray-100"
+              value={sectionName}
+              onChange={e => setSectionName(e.target.value)}
+              placeholder="Section Name"
+            />
+            <button onClick={handleNewSection} className="bg-yellow-500 text-black px-4 py-2 rounded w-full mt-2">
+              ➕ Start New Section
+            </button>
+            <div className="space-y-1 mt-2">
+              {sections.map((section, idx) => (
+                <div key={idx} className="flex justify-between items-center bg-gray-100 p-2 rounded">
+                  <span>{section.name}</span>
+                  <div className="flex gap-2">
+                    <button className="text-sm bg-gray-600 text-white px-2 py-1 rounded" onClick={() => exportAsJSON(section.data, section.name)}>
+                      JSON
+                    </button>
+                    <button className="text-sm bg-gray-600 text-white px-2 py-1 rounded" onClick={() => exportAsGPX(section.data, section.name)}>
+                      GPX
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </section>
 
           <section>
@@ -171,7 +208,7 @@ export default function RallyLayout() {
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-5 gap-2">
               {iconCategories[activeCategory].map(icon => (
                 <button
                   key={icon.name}
@@ -203,7 +240,7 @@ export default function RallyLayout() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold">🧭 Waypoints</h2>
+            <h2 className="text-lg font-semibold">🧭 Current Section Waypoints</h2>
             {waypoints.map((wp, idx) => (
               <div key={idx} className="bg-gray-100 p-3 rounded mb-2">
                 <div className="flex items-center gap-2">
@@ -218,15 +255,7 @@ export default function RallyLayout() {
           </section>
         </div>
       </div>
-
-      <footer className="p-4 border-t border-gray-300 flex gap-4 justify-center bg-gray-100">
-        <button className="bg-gray-700 text-white px-4 py-2 rounded" onClick={() => exportAsJSON(waypoints)}>
-          Export JSON
-        </button>
-        <button className="bg-gray-700 text-white px-4 py-2 rounded" onClick={() => exportAsGPX(waypoints)}>
-          Export GPX
-        </button>
-      </footer>
     </div>
   );
 }
+
