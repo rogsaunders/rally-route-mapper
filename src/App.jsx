@@ -171,7 +171,7 @@ export default function RallyLayout() {
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-6 gap-2">
               {iconCategories[activeCategory].map(icon => (
                 <button
                   key={icon.name}
