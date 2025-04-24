@@ -20,21 +20,23 @@ const iconCategories = {
     { name: 'Up hill', src: '/icons/uphill.svg' },
     { name: 'Down hill', src: '/icons/downhill.svg' },
     { name: 'Fence gate', src: '/icons/fence-gate.svg' },
-    { name: 'Fence gate with cattle grid', src: '/icons/fence-gate-grid.svg' },
     { name: 'Wading / water crossing', src: '/icons/wading.svg' },
   ],
   Symbols: [
+    { name: 'Grid', src: '/icons/grid.svg' },
     { name: 'Fence', src: '/icons/fence.svg' },
     { name: 'Rail road', src: '/icons/railroad.svg' },
     { name: 'Twisty', src: '/icons/twisty.svg' },
     { name: 'Bumpy', src: '/icons/bumpy.svg' },
   ],
   Abbreviations: [
-    { name: 'On left', src: '/icons/on-left.svg' },
-    { name: 'On right', src: '/icons/on-right.svg' },
+    { name: 'Right', src: '/icons/right.svg' },
+    { name: 'Left', src: '/icons/left.svg' },
     { name: 'Keep to the left', src: '/icons/keep-left.svg' },
     { name: 'Keep to the right', src: '/icons/keep-right.svg' },
     { name: 'Keep straight', src: '/icons/keep-straight.svg' },
+    { name: 'On Left', src: '/icons/on-left.svg' },
+    { name: 'On Right', src: '/icons/on-right.svg' },
   ],
 };
 
@@ -208,7 +210,7 @@ export default function RallyLayout() {
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-8 gap-2">
               {iconCategories[activeCategory].map(icon => (
                 <button
                   key={icon.name}
