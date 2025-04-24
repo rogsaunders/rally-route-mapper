@@ -5,13 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
 const iconCategories = {
-  Safety: [
-    { name: 'Danger 1', src: '/icons/danger-1.svg' },
-    { name: 'Danger 2', src: '/icons/danger-2.svg' },
-    { name: 'Danger 3', src: '/icons/danger-3.svg' },
-    { name: 'Stop', src: '/icons/stop.svg' },
-    { name: 'Caution', src: '/icons/caution.svg' },
-  ],
+  
   'On Track': [
     { name: 'Bump', src: '/icons/bump.svg' },
     { name: 'Dip Hole', src: '/icons/dip-hole.svg' },
@@ -29,6 +23,8 @@ const iconCategories = {
     { name: 'Rail road', src: '/icons/railroad.svg' },
     { name: 'Twisty', src: '/icons/twisty.svg' },
     { name: 'Bumpy', src: '/icons/bumpy.svg' },
+    { name: 'Bumpy Broken', src: '/icons/bumpy_broken.svg' },
+    { name: 'Tree', src: '/icons/tree_5.svg' },
   ],
   Abbreviations: [
     { name: 'Left', src: '/icons/left.svg' },
@@ -39,6 +35,17 @@ const iconCategories = {
     { name: 'Keep straight', src: '/icons/keep-straight.svg' },
     { name: 'On Left', src: '/icons/on-left.svg' },
     { name: 'On Right', src: '/icons/on-right.svg' },
+  ],
+  Controls: [
+    { name: 'Stop for Restart', src: '/icons/stop_for_restart.svg' },
+    { name: 'Arrive Selective Section', src: '/icons/arrive_selective_section_flag.svg' },
+  ],
+  Safety: [
+    { name: 'Danger 1', src: '/icons/danger-1.svg' },
+    { name: 'Danger 2', src: '/icons/danger-2.svg' },
+    { name: 'Danger 3', src: '/icons/danger-3.svg' },
+    { name: 'Stop', src: '/icons/stop.svg' },
+    { name: 'Caution', src: '/icons/caution.svg' },
   ],
 };
 
