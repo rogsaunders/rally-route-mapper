@@ -67,7 +67,7 @@ export default function RallyLayout() {
   const [sections, setSections] = useState([]);
   const [sectionName, setSectionName] = useState('Section 1');
   const [activeCategory, setActiveCategory] = useState('Safety');
-  const [startGPS, setStartGPS] = useState({ lat: -33.8688, lon: 151.2093 });
+  const [startGPS, setStartGPS] = useState({ lat: -34.9285, lon: 138.6007 });
   const [currentGPS, setCurrentGPS] = useState(null);
   const [showMap, setShowMap] = useState(true);
 
