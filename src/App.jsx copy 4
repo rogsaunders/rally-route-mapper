@@ -1,9 +1,8 @@
 // App.jsx — Fixed version after Field Test #1 Feedback
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { supabase } from './supabaseClient';
 
 const iconCategories = {
   
@@ -71,46 +70,8 @@ export default function RallyLayout() {
   const [startGPS, setStartGPS] = useState({ lat: -34.9285, lon: 138.6007 });
   const [currentGPS, setCurrentGPS] = useState(null);
   const [showMap, setShowMap] = useState(true);
-  const [loadingSections, setLoadingSections] = useState(false);
 
   useEffect(() => {
-    // Load saved sections and waypoints from Supabase
-    const loadSections = async () => {
-      setLoadingSections(true);
-      const { data: sectionList, error: sectionError } = await supabase
-        .from('sections')
-        .select('id, name')
-        .order('created_at', { ascending: true });
-
-      if (sectionError) {
-        console.error('❌ Failed to load sections:', sectionError);
-        setLoadingSections(false);
-        return;
-      }
-
-      const sectionsWithData = await Promise.all(
-        sectionList.map(async (section) => {
-          const { data: waypoints, error: wpError } = await supabase
-            .from('waypoints')
-            .select('*')
-            .eq('section_id', section.id);
-
-          if (wpError) {
-            console.error(`⚠️ Failed to load waypoints for section ${section.name}`, wpError);
-            return { ...section, data: [] };
-          }
-
-          return { ...section, data: waypoints };
-        })
-      );
-
-      setSections(sectionsWithData);
-      setLoadingSections(false);
-    };
-
-    loadSections();
-
-    // GPS fetch
     const geo = navigator.geolocation;
     if (geo) {
       geo.getCurrentPosition(
@@ -143,31 +104,10 @@ export default function RallyLayout() {
     setPoi('');
   };
 
-  const handleNewSection = async () => {
-    const { data: section, error: sectionError } = await supabase
-      .from('sections')
-      .insert([{ name: sectionName }])
-      .select()
-      .single();
-
-    if (sectionError) {
-      console.error('❌ Failed to create section:', sectionError);
-      return;
-    }
-
-    const enrichedWaypoints = waypoints.map(wp => ({ ...wp, section_id: section.id }));
-
-    const { error: wpError } = await supabase
-      .from('waypoints')
-      .insert(enrichedWaypoints);
-
-    if (wpError) {
-      console.error('❌ Failed to save waypoints:', wpError);
-    } else {
-      setSections([...sections, { name: sectionName, data: waypoints }]);
-      setWaypoints([]);
-      setSectionName(`Section ${sections.length + 2}`);
-    }
+  const handleNewSection = () => {
+    setSections([...sections, { name: sectionName, data: waypoints }]);
+    setWaypoints([]);
+    setSectionName(`Section ${sections.length + 2}`);
   };
 
   const exportAsJSON = (data, name = 'section') => {

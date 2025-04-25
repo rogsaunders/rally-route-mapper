@@ -1,9 +1,8 @@
 // App.jsx — Fixed version after Field Test #1 Feedback
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { supabase } from './supabaseClient';
 
 const iconCategories = {
   
@@ -71,9 +70,8 @@ export default function RallyLayout() {
   const [startGPS, setStartGPS] = useState({ lat: -34.9285, lon: 138.6007 });
   const [currentGPS, setCurrentGPS] = useState(null);
   const [showMap, setShowMap] = useState(true);
-  const [loadingSections, setLoadingSections] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
     // Load saved sections and waypoints from Supabase
     const loadSections = async () => {
       setLoadingSections(true);
@@ -168,6 +166,31 @@ export default function RallyLayout() {
       setWaypoints([]);
       setSectionName(`Section ${sections.length + 2}`);
     }
+  };
+
+  const handleAddWaypoint = () => {
+    if (!selectedIcon || !currentGPS) return;
+    const icon = allIcons.find(i => i.name === selectedIcon);
+    const { lat, lon } = currentGPS;
+    const distance = haversineDistance(startGPS.lat, startGPS.lon, lat, lon);
+    const timestamp = new Date().toLocaleTimeString();
+    const waypoint = {
+      name: selectedIcon,
+      iconSrc: icon?.src,
+      lat: lat.toFixed(2),
+      lon: lon.toFixed(2),
+      timestamp,
+      distance,
+      poi
+    };
+    setWaypoints([...waypoints, waypoint]);
+    setPoi('');
+  };
+
+  const handleNewSection = () => {
+    setSections([...sections, { name: sectionName, data: waypoints }]);
+    setWaypoints([]);
+    setSectionName(`Section ${sections.length + 2}`);
   };
 
   const exportAsJSON = (data, name = 'section') => {
