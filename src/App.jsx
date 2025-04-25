@@ -137,8 +137,8 @@ export default function RallyLayout() {
     const waypoint = {
       name: selectedIcon,
       iconSrc: icon?.src,
-      lat: lat.toFixed(2),
-      lon: lon.toFixed(2),
+      lat,
+      lon,
       timestamp,
       distance,
       poi
