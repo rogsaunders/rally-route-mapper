@@ -239,15 +239,24 @@ ${data.map(wp => `<wpt lat="${wp.lat}" lon="${wp.lon}"><name>${wp.name}</name><d
             <button
               className="bg-blue-600 text-white px-4 py-2 rounded mb-2"
               onClick={() => {
-                navigator.geolocation.getCurrentPosition(
-                  (pos) => {
-                    const { latitude, longitude } = pos.coords;
-                    setStartGPS({ lat: latitude, lon: longitude });
-                    setCurrentGPS({ lat: latitude, lon: longitude });
-                  },
-                  (err) => console.error("Could not access GPS", err),
-                  { enableHighAccuracy: true }
-                );
+                const geo = navigator.geolocation;
+                if (!geo) return;
+
+                const success = (pos) => {
+                  const { latitude, longitude } = pos.coords;
+                  setStartGPS({ lat: latitude, lon: longitude });
+                  setCurrentGPS({ lat: latitude, lon: longitude });
+                };
+
+                const error = (err) => {
+                  console.error("Could not access GPS", err);
+                };
+
+                geo.getCurrentPosition(success, error, {
+                  enableHighAccuracy: true,
+                  timeout: 10000,
+                  maximumAge: 0,
+                });
               }}
             >
               📍 Set Start Point
