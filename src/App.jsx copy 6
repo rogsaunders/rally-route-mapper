@@ -147,69 +147,38 @@ export default function RallyLayout() {
     setPoi('');
   };
 
- const handleNewSection = async () => {
-  const duplicate = sections.find(sec => sec.name.toLowerCase() === sectionName.toLowerCase());
-  if (duplicate) {
-    alert(`A section named "${sectionName}" already exists. Please choose another name.`);
-    return;
-  }
-
-  const { data: section, error: sectionError } = await supabase
-    .from('sections')
-    .insert([{ name: sectionName }])
-    .select()
-    .single();
-
-  if (sectionError) {
-    console.error('❌ Failed to create section:', sectionError);
-    return;
-  }
-
-  const enrichedWaypoints = waypoints.map(wp => ({ ...wp, section_id: section.id }));
-
-  const { error: wpError } = await supabase
-    .from('waypoints')
-    .insert(enrichedWaypoints);
-
-  if (wpError) {
-    console.error('❌ Failed to save waypoints:', wpError);
-  } else {
-    setSections([...sections, { name: sectionName, data: waypoints }]);
-    setWaypoints([]);
-    setSectionName(`Section ${sections.length + 2}`);
-  }
-};
-
-  const deleteSection = async (sectionId) => {
-    const confirm = window.confirm("Are you sure you want to delete this section?");
-    if (!confirm) return;
-
-    // Delete waypoints first
-    const { error: wpError } = await supabase
-      .from('waypoints')
-      .delete()
-      .eq('section_id', sectionId);
-
-    if (wpError) {
-      console.error("❌ Error deleting waypoints", wpError);
-      return;
-    }
-
-    // Then delete the section
-    const { error: sectionError } = await supabase
+  const handleNewSection = async () => {
+    const { data: section, error: sectionError } = await supabase
       .from('sections')
-      .delete()
-      .eq('id', sectionId);
+      .insert([{ name: sectionName }])
+      .select()
+      .single();
 
     if (sectionError) {
-      console.error("❌ Error deleting section", sectionError);
+      console.error('❌ Failed to create section:', sectionError);
       return;
     }
 
-    // Update UI
-    setSections(prev => prev.filter(s => s.id !== sectionId));
+    const enrichedWaypoints = waypoints.map(wp => ({ ...wp, section_id: section.id }));
+
+    const { error: wpError } = await supabase
+      .from('waypoints')
+      .insert(enrichedWaypoints);
+
+    if (wpError) {
+      console.error('❌ Failed to save waypoints:', wpError);
+    } else {
+      setSections([...sections, { name: sectionName, data: waypoints }]);
+      setWaypoints([]);
+      setSectionName(`Section ${sections.length + 2}`);
+    }
+    const duplicate = sections.find(sec => sec.name.toLowerCase() === sectionName.toLowerCase());
+    if (duplicate) {
+        alert(`A section named "${sectionName}" already exists. Please choose another name.`);
+        return;
+    }
   };
-  
+
   const exportAsJSON = (data, name = 'section') => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -315,18 +284,15 @@ ${data.map(wp => `<wpt lat="${wp.lat}" lon="${wp.lon}"><name>${wp.name}</name><d
             <div className="space-y-1 mt-2">
               {sections.map((section, idx) => (
                 <div key={idx} className="flex justify-between items-center bg-gray-100 p-2 rounded">
-                    <span>{section.name}</span>
-                    <div className="flex gap-2">
-                        <button className="text-sm bg-gray-600 text-white px-2 py-1 rounded" onClick={() => exportAsJSON(section.data, section.name)}>
-                            JSON
-                        </button>
-                        <button className="text-sm bg-gray-600 text-white px-2 py-1 rounded" onClick={() => exportAsGPX(section.data, section.name)}>
-                            GPX
-                        </button>
-                        <button className="text-sm bg-red-600 text-white px-2 py-1 rounded" onClick={() => deleteSection(section.id)}>
-                            🗑️
-                        </button>
-                    </div>
+                  <span>{section.name}</span>
+                  <div className="flex gap-2">
+                    <button className="text-sm bg-gray-600 text-white px-2 py-1 rounded" onClick={() => exportAsJSON(section.data, section.name)}>
+                      JSON
+                    </button>
+                    <button className="text-sm bg-gray-600 text-white px-2 py-1 rounded" onClick={() => exportAsGPX(section.data, section.name)}>
+                      GPX
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
