@@ -110,18 +110,22 @@ export default function RallyLayout() {
 
     loadSections();
 
-    // GPS fetch
+    // Setup live GPS tracking
     const geo = navigator.geolocation;
-    if (geo) {
-      geo.getCurrentPosition(
-        pos => {
-          setStartGPS({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-          setCurrentGPS({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-        },
-        err => console.warn('Could not get position', err),
-        { enableHighAccuracy: true }
-      );
-    }
+    if (!geo) return;
+
+    const watchId = geo.watchPosition(
+      pos => {
+        const { latitude, longitude } = pos.coords;
+        setCurrentGPS({ lat: latitude, lon: longitude });
+        setStartGPS({ lat: latitude, lon: longitude }); // optional if you want to reset start with GPS
+      },
+      err => console.warn('Live GPS error', err),
+      { enableHighAccuracy: true }
+    );
+
+    // Cleanup watchPosition on unmount
+    return () => geo.clearWatch(watchId);
   }, []);
 
   const handleAddWaypoint = () => {
@@ -353,3 +357,6 @@ ${data.map(wp => `<wpt lat="${wp.lat}" lon="${wp.lon}"><name>${wp.name}</name><d
     </div>
   );
 }
+
+
+
