@@ -1,25 +1,16 @@
 // App.jsx — Fixed version after Field Test #1 Feedback
 import React, { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import { supabase } from "./supabaseClient";
 import L from "leaflet";
-import startSound from "./assets/sounds/start.wav";
-import stopSound from "./assets/sounds/stop.wav";
 
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371e3; // metres
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c; // in meters
-}
+const startIcon = L.icon({
+  iconUrl: "/icons/start-flag.svg",
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32],
+});
 
 const iconCategories = {
   "On Track": [
@@ -31,7 +22,9 @@ const iconCategories = {
     { name: "Up hill", src: "/icons/uphill.svg" },
     { name: "Down hill", src: "/icons/downhill.svg" },
     { name: "Fence gate", src: "/icons/fence-gate.svg" },
-    { name: "Water crossing", src: "/icons/wading.svg" },
+    { name: "Wading / water crossing", src: "/icons/wading.svg" },
+  ],
+  Symbols: [
     { name: "Grid", src: "/icons/grid.svg" },
     { name: "Fence", src: "/icons/fence.svg" },
     { name: "Rail road", src: "/icons/railroad.svg" },
@@ -82,54 +75,6 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 export default function RallyLayout() {
   const [selectedIcon, setSelectedIcon] = useState(null);
   const [poi, setPoi] = useState("");
-  const [recognitionActive, setRecognitionActive] = useState(false);
-  const playSound = (src) => {
-    const audio = new Audio(src);
-    audio.play().catch((err) => {
-      console.warn("Sound playback failed:", err);
-    });
-  };
-  // Voice input for POI
-  const startVoiceInput = () => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      alert("Speech Recognition is not supported in this browser.");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = "en-AU";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      setRecognitionActive(true);
-      playSound(startSound); // ✅ play start tone
-    };
-
-    recognition.onend = () => {
-      setRecognitionActive(false);
-      playSound(stopSound); // ✅ play stop tone
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setPoi(transcript);
-
-      // ✅ Auto-focus the POI text field after transcription
-      if (poiRef.current) {
-        poiRef.current.focus();
-        poiRef.current.select(); // selects the full text for easy overwrite
-      }
-    };
-
-    recognition.onerror = (event) => {
-      console.error("Voice input error:", event.error);
-    };
-
-    recognition.start();
-  };
   const [waypoints, setWaypoints] = useState([]);
   const [sections, setSections] = useState([]);
   const [sectionName, setSectionName] = useState("Section 1");
@@ -179,21 +124,22 @@ export default function RallyLayout() {
 
     loadSections();
 
-    // GPS fetch
+    // Setup live GPS tracking
     const geo = navigator.geolocation;
-    if (geo) {
-      geo.getCurrentPosition(
-        (pos) => {
-          setStartGPS({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-          setCurrentGPS({
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude,
-          });
-        },
-        (err) => console.warn("Could not get position", err),
-        { enableHighAccuracy: true }
-      );
-    }
+    if (!geo) return;
+
+    const watchId = geo.watchPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setCurrentGPS({ lat: latitude, lon: longitude });
+        setStartGPS({ lat: latitude, lon: longitude }); // optional if you want to reset start with GPS
+      },
+      (err) => console.warn("Live GPS error", err),
+      { enableHighAccuracy: true }
+    );
+
+    // Cleanup watchPosition on unmount
+    return () => geo.clearWatch(watchId);
   }, []);
 
   const handleAddWaypoint = () => {
@@ -205,26 +151,27 @@ export default function RallyLayout() {
     const waypoint = {
       name: selectedIcon,
       iconSrc: icon?.src,
-      lat: lat.toFixed(2),
-      lon: lon.toFixed(2),
+      lat,
+      lon,
       timestamp,
       distance,
       poi,
     };
-    if (waypoints.length > 0) {
-      const last = waypoints[waypoints.length - 1];
-      newWaypoint.distance = calculateDistance(
-        last.lat,
-        last.lng,
-        newWaypoint.lat,
-        newWaypoint.lng
-      );
-    }
     setWaypoints([...waypoints, waypoint]);
     setPoi("");
   };
 
   const handleNewSection = async () => {
+    const duplicate = sections.find(
+      (sec) => sec.name.toLowerCase() === sectionName.toLowerCase()
+    );
+    if (duplicate) {
+      alert(
+        `A section named "${sectionName}" already exists. Please choose another name.`
+      );
+      return;
+    }
+
     const { data: section, error: sectionError } = await supabase
       .from("sections")
       .insert([{ name: sectionName }])
@@ -252,6 +199,38 @@ export default function RallyLayout() {
       setWaypoints([]);
       setSectionName(`Section ${sections.length + 2}`);
     }
+  };
+
+  const deleteSection = async (sectionId) => {
+    const confirm = window.confirm(
+      "Are you sure you want to delete this section?"
+    );
+    if (!confirm) return;
+
+    // Delete waypoints first
+    const { error: wpError } = await supabase
+      .from("waypoints")
+      .delete()
+      .eq("section_id", sectionId);
+
+    if (wpError) {
+      console.error("❌ Error deleting waypoints", wpError);
+      return;
+    }
+
+    // Then delete the section
+    const { error: sectionError } = await supabase
+      .from("sections")
+      .delete()
+      .eq("id", sectionId);
+
+    if (sectionError) {
+      console.error("❌ Error deleting section", sectionError);
+      return;
+    }
+
+    // Update UI
+    setSections((prev) => prev.filter((s) => s.id !== sectionId));
   };
 
   const exportAsJSON = (data, name = "section") => {
@@ -286,17 +265,6 @@ ${data
     URL.revokeObjectURL(url);
   };
 
-  // Move RecenterMapToStart component definition here
-  function RecenterMapToStart({ lat, lon }) {
-    const map = useMap();
-    useEffect(() => {
-      if (lat && lon) {
-        map.setView([lat, lon], 14);
-      }
-    }, [lat, lon]);
-    return null;
-  }
-
   return (
     <div className="flex flex-col h-screen">
       <header className="px-4 py-2 border-b border-gray-300 bg-white font-heading text-xl font-bold flex justify-between items-center">
@@ -322,7 +290,6 @@ ${data
               scrollWheelZoom
               className="h-full w-full"
             >
-              <RecenterMapToStart lat={startGPS.lat} lon={startGPS.lon} />
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution="&copy; OpenStreetMap contributors"
@@ -332,12 +299,7 @@ ${data
               {startGPS && (
                 <Marker
                   position={[startGPS.lat, startGPS.lon]}
-                  icon={L.icon({
-                    iconUrl: "/icons/start-flag.svg",
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 32],
-                    popupAnchor: [0, -32],
-                  })}
+                  icon={startIcon}
                 >
                   <Popup>
                     <strong>Start Point</strong>
@@ -347,7 +309,7 @@ ${data
                 </Marker>
               )}
 
-              {/* ✅ Waypoint Markers */}
+              {/* ✅ Waypoints */}
               {waypoints.map((wp, idx) => (
                 <Marker
                   key={idx}
@@ -370,6 +332,21 @@ ${data
             </MapContainer>
           </div>
         )}
+        {startGPS && (
+          <Marker
+            position={[startGPS.lat, startGPS.lon]}
+            icon={L.icon({
+              iconUrl: "/icons/start-flag.svg", // Use a distinctive icon for start
+              iconSize: [32, 32],
+            })}
+          >
+            <Popup>
+              <strong>Start Point</strong>
+              <br />
+              GPS: {startGPS.lat.toFixed(5)}, {startGPS.lon.toFixed(5)}
+            </Popup>
+          </Marker>
+        )}
 
         <div className="w-full lg:w-1/2 h-full overflow-y-auto p-4 space-y-4 border-t lg:border-t-0 lg:border-l border-gray-300">
           <section>
@@ -380,15 +357,21 @@ ${data
                 const geo = navigator.geolocation;
                 if (!geo) return;
 
-                geo.getCurrentPosition(
-                  (pos) => {
-                    const { latitude, longitude } = pos.coords;
-                    setStartGPS({ lat: latitude, lon: longitude });
-                    setCurrentGPS({ lat: latitude, lon: longitude });
-                  },
-                  (err) => console.error("❌ Could not access GPS", err),
-                  { enableHighAccuracy: true, timeout: 10000 }
-                );
+                const success = (pos) => {
+                  const { latitude, longitude } = pos.coords;
+                  setStartGPS({ lat: latitude, lon: longitude });
+                  setCurrentGPS({ lat: latitude, lon: longitude });
+                };
+
+                const error = (err) => {
+                  console.error("Could not access GPS", err);
+                };
+
+                geo.getCurrentPosition(success, error, {
+                  enableHighAccuracy: true,
+                  timeout: 10000,
+                  maximumAge: 0,
+                });
               }}
             >
               📍 Set Start Point
@@ -436,6 +419,12 @@ ${data
                       onClick={() => exportAsGPX(section.data, section.name)}
                     >
                       GPX
+                    </button>
+                    <button
+                      className="text-sm bg-red-600 text-white px-2 py-1 rounded"
+                      onClick={() => deleteSection(section.id)}
+                    >
+                      🗑️
                     </button>
                   </div>
                 </div>
@@ -490,13 +479,6 @@ ${data
               onChange={(e) => setPoi(e.target.value)}
               className="w-full p-2 rounded bg-gray-100"
             />
-            <button
-              className="bg-gray-300 hover:bg-gray-400 text-black px-3 py-1 rounded mt-2"
-              onClick={startVoiceInput}
-              type="button"
-            >
-              🎤 {recognitionActive ? "Listening..." : "Voice Input"}
-            </button>
             <button
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full mt-2"
               onClick={handleAddWaypoint}
